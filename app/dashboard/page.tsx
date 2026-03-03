@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Send, Globe, Copy, Check, FileText, Database, ArrowLeft, ExternalLink, BookOpen, Settings, Clock, Loader2 } from 'lucide-react'
+import { Send, Globe, Copy, Check, FileText, Database, ArrowLeft, ExternalLink, BookOpen, Settings, Clock, Loader2, Search } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 // Removed useChat - using custom implementation
@@ -776,19 +776,47 @@ print(data['choices'][0]['message']['content'])`
           <div className="lg:w-3/4 lg:h-full">
             {/* Search mode: full-width results */}
             {mode === 'search' && (searchResults || isSearching) ? (
-              <div className="bg-white rounded-xl border border-gray-200 p-6 h-[500px] lg:h-full overflow-y-auto">
-                {isSearching ? (
-                  <div className="flex items-center justify-center py-16">
-                    <Loader2 className="w-6 h-6 text-orange-500 animate-spin mr-3" />
-                    <span className="text-gray-500">Recherche en cours...</span>
-                  </div>
-                ) : searchResults ? (
-                  <SearchResults
-                    results={searchResults}
-                    query={lastSearchQuery}
-                    onSendToChat={handleSendToChat}
-                  />
-                ) : null}
+              <div className="bg-white rounded-xl border border-gray-200 flex flex-col h-[500px] lg:h-full overflow-hidden">
+                {/* Search bar pinned at top */}
+                <div className="p-4 border-b border-gray-200 flex-shrink-0">
+                  <form onSubmit={(e) => { e.preventDefault(); handleSearch() }} className="flex items-center gap-2">
+                    <ModeToggle mode={mode} onChange={(m) => { setMode(m); setSearchResults(null) }} />
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Input
+                        type="text"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        placeholder={`Rechercher dans ${siteData.metadata.title}...`}
+                        className="w-full pl-9 pr-12 placeholder:text-gray-400"
+                        disabled={isSearching}
+                        autoFocus
+                      />
+                      <button
+                        type="submit"
+                        disabled={isSearching || !input.trim()}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-orange-600 hover:text-orange-700 disabled:opacity-50 transition-colors"
+                      >
+                        <Send className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </form>
+                </div>
+                {/* Results area */}
+                <div className="flex-1 overflow-y-auto p-6">
+                  {isSearching ? (
+                    <div className="flex items-center justify-center py-16">
+                      <Loader2 className="w-6 h-6 text-orange-500 animate-spin mr-3" />
+                      <span className="text-gray-500">Recherche en cours...</span>
+                    </div>
+                  ) : searchResults ? (
+                    <SearchResults
+                      results={searchResults}
+                      query={lastSearchQuery}
+                      onSendToChat={handleSendToChat}
+                    />
+                  ) : null}
+                </div>
               </div>
             ) : (
             <div className="flex flex-col lg:flex-row gap-6 lg:h-full">

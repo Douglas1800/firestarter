@@ -11,6 +11,7 @@ export function ModeToggle({ mode, onChange }: ModeToggleProps) {
   return (
     <div className="inline-flex p-1 bg-gray-100 rounded-lg">
       <button
+        type="button"
         onClick={() => onChange('chat')}
         className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
           mode === 'chat'
@@ -22,6 +23,7 @@ export function ModeToggle({ mode, onChange }: ModeToggleProps) {
         Chat IA
       </button>
       <button
+        type="button"
         onClick={() => onChange('search')}
         className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-all ${
           mode === 'search'
