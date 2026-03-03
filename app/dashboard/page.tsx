@@ -4,10 +4,13 @@ import { useState, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Send, Globe, Copy, Check, FileText, Database, ArrowLeft, ExternalLink, BookOpen } from 'lucide-react'
+import { Send, Globe, Copy, Check, FileText, Database, ArrowLeft, ExternalLink, BookOpen, Settings, Clock, Loader2 } from 'lucide-react'
+import Link from 'next/link'
 import Image from 'next/image'
 // Removed useChat - using custom implementation
 import { toast } from "sonner"
+import { ModeToggle } from "@/components/ui/mode-toggle"
+import { SearchResults, type SearchResult } from "@/components/search-results"
 import {
   Dialog,
   DialogContent,
@@ -215,6 +218,10 @@ function DashboardContent() {
   const [activeTab, setActiveTab] = useState<'curl' | 'javascript' | 'python' | 'openai-js' | 'openai-python'>('curl')
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const [autoScroll, setAutoScroll] = useState(true)
+  const [mode, setMode] = useState<'chat' | 'search'>('chat')
+  const [searchResults, setSearchResults] = useState<SearchResult[] | null>(null)
+  const [isSearching, setIsSearching] = useState(false)
+  const [lastSearchQuery, setLastSearchQuery] = useState('')
 
   useEffect(() => {
     const el = scrollAreaRef.current
@@ -354,40 +361,82 @@ function DashboardContent() {
     }
   }
 
+  // Handle search mode submission
+  const handleSearch = async (searchQuery?: string) => {
+    const q = (searchQuery || input).trim()
+    if (!q || !siteData) return
+
+    setIsSearching(true)
+    setSearchResults(null)
+    setLastSearchQuery(q)
+    if (!searchQuery) setInput('')
+
+    try {
+      const response = await fetch('/api/firestarter/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: q,
+          namespace: siteData.namespace,
+          mode: 'search',
+        }),
+      })
+
+      if (!response.ok) throw new Error('Search failed')
+
+      const data = await response.json()
+      setSearchResults(data.results || [])
+    } catch {
+      toast.error('Erreur lors de la recherche')
+    } finally {
+      setIsSearching(false)
+    }
+  }
+
+  // "Envoyer au chat": switch to chat mode and auto-submit the query
+  const handleSendToChat = (query: string) => {
+    setMode('chat')
+    setSearchResults(null)
+    setInput(query)
+    // Auto-submit after a tick so the input is set
+    setTimeout(() => {
+      const form = document.querySelector('form') as HTMLFormElement | null
+      form?.requestSubmit()
+    }, 50)
+  }
+
+  // Form onSubmit routes to the right handler
+  const handleFormSubmit = (e: React.FormEvent) => {
+    if (mode === 'search') {
+      e.preventDefault()
+      handleSearch()
+    } else {
+      handleSubmit(e)
+    }
+  }
+
   useEffect(() => {
     // Get namespace from URL params
     const namespaceParam = searchParams.get('namespace')
-    
+
     if (namespaceParam) {
-      // Try to load data for this specific namespace
-      const storedIndexes = localStorage.getItem('firestarter_indexes')
-      if (storedIndexes) {
-        const indexes = JSON.parse(storedIndexes)
-        const matchingIndex = indexes.find((idx: { namespace: string }) => idx.namespace === namespaceParam)
-        if (matchingIndex) {
-          setSiteData(matchingIndex)
-          // Also update sessionStorage for consistency
-          sessionStorage.setItem('firestarter_current_data', JSON.stringify(matchingIndex))
-          // Clear messages when namespace changes
-          setMessages([])
-        } else {
-          // Namespace not found in stored indexes
+      fetch('/api/indexes')
+        .then(res => res.json())
+        .then(data => {
+          const indexes = data.indexes || []
+          const matchingIndex = indexes.find((idx: { namespace: string }) => idx.namespace === namespaceParam)
+          if (matchingIndex) {
+            setSiteData(matchingIndex)
+            setMessages([])
+          } else {
+            router.push('/indexes')
+          }
+        })
+        .catch(() => {
           router.push('/indexes')
-        }
-      } else {
-        router.push('/indexes')
-      }
+        })
     } else {
-      // Fallback to sessionStorage if no namespace param
-      const data = sessionStorage.getItem('firestarter_current_data')
-      if (data) {
-        const parsedData = JSON.parse(data)
-        setSiteData(parsedData)
-        // Add namespace to URL for consistency
-        router.replace(`/dashboard?namespace=${parsedData.namespace}`)
-      } else {
-        router.push('/indexes')
-      }
+      router.push('/indexes')
     }
   }, [router, searchParams])
 
@@ -400,16 +449,13 @@ function DashboardContent() {
     }
   }
 
-  const handleDelete = () => {
-    // Remove from localStorage
-    const storedIndexes = localStorage.getItem('firestarter_indexes')
-    if (storedIndexes && siteData) {
-      const indexes = JSON.parse(storedIndexes)
-      const updatedIndexes = indexes.filter((idx: { namespace: string }) => idx.namespace !== siteData.namespace)
-      localStorage.setItem('firestarter_indexes', JSON.stringify(updatedIndexes))
+  const handleDelete = async () => {
+    if (!siteData) return
+    try {
+      await fetch(`/api/indexes?namespace=${siteData.namespace}`, { method: 'DELETE' })
+    } catch {
+      console.error('Failed to delete index')
     }
-    
-    sessionStorage.removeItem('firestarter_current_data')
     router.push('/indexes')
   }
 
@@ -603,13 +649,25 @@ print(data['choices'][0]['message']['content'])`
               </div>
             </div>
             
-            <Button
-              onClick={() => setShowDeleteModal(true)}
-              variant="code"
-              size="sm"
-            >
-              Delete
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+              >
+                <Link href={`/manage?namespace=${siteData.namespace}`}>
+                  <Settings className="w-4 h-4 mr-1" />
+                  Gérer
+                </Link>
+              </Button>
+              <Button
+                onClick={() => setShowDeleteModal(true)}
+                variant="code"
+                size="sm"
+              >
+                Delete
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -667,7 +725,20 @@ print(data['choices'][0]['message']['content'])`
                       <Globe className="w-4 h-4" />
                       <span className="text-sm font-medium">Namespace</span>
                     </div>
-                    <span className="text-xs font-mono text-gray-800 break-all">{siteData.namespace.split('-').slice(0, -1).join('.')}</span>
+                    <span className="text-xs font-mono text-gray-800 break-all">{siteData.namespace}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-gray-700">
+                      <Clock className="w-4 h-4" />
+                      <span className="text-sm font-medium">Dernier crawl</span>
+                    </div>
+                    <span className="text-xs text-gray-800">
+                      {(() => {
+                        const dateString = (siteData as SiteData & { lastCrawledAt?: string }).lastCrawledAt || siteData.crawlDate || siteData.createdAt;
+                        return dateString ? new Date(dateString).toLocaleDateString('fr-CH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'N/A';
+                      })()}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -701,18 +772,35 @@ print(data['choices'][0]['message']['content'])`
             </div>
           </div>
 
-          {/* Chat Panel and Sources - Show below on mobile */}
+          {/* Main Content Panel - Show below on mobile */}
           <div className="lg:w-3/4 lg:h-full">
+            {/* Search mode: full-width results */}
+            {mode === 'search' && (searchResults || isSearching) ? (
+              <div className="bg-white rounded-xl border border-gray-200 p-6 h-[500px] lg:h-full overflow-y-auto">
+                {isSearching ? (
+                  <div className="flex items-center justify-center py-16">
+                    <Loader2 className="w-6 h-6 text-orange-500 animate-spin mr-3" />
+                    <span className="text-gray-500">Recherche en cours...</span>
+                  </div>
+                ) : searchResults ? (
+                  <SearchResults
+                    results={searchResults}
+                    query={lastSearchQuery}
+                    onSendToChat={handleSendToChat}
+                  />
+                ) : null}
+              </div>
+            ) : (
             <div className="flex flex-col lg:flex-row gap-6 lg:h-full">
               {/* Chat Panel */}
               <div className="w-full lg:w-2/3 bg-white rounded-xl border border-gray-200 flex flex-col overflow-hidden h-[500px] lg:h-full">
                 <div ref={scrollAreaRef} className="flex-1 overflow-y-auto p-6 pb-0">
                   {messages.length === 0 && (
-                    <div className="text-center py-20">
+                    <div className="text-center py-12">
                       <div className="mb-4">
                         {siteData.metadata.favicon && (
-                          <Image 
-                            src={siteData.metadata.favicon} 
+                          <Image
+                            src={siteData.metadata.favicon}
                             alt={siteData.metadata.title}
                             width={64}
                             height={64}
@@ -724,11 +812,36 @@ print(data['choices'][0]['message']['content'])`
                         )}
                       </div>
                       <h3 className="text-lg font-semibold text-[#36322F] mb-2">
-                        Chat with {siteData.metadata.title}
+                        {siteData.metadata.title}
                       </h3>
-                      <p className="text-gray-600">
-                        Ask anything about their {siteData.pagesCrawled} indexed pages
+                      <p className="text-gray-600 mb-6">
+                        {siteData.pagesCrawled} pages indexées - Posez vos questions
                       </p>
+                      <div className="space-y-2 max-w-sm mx-auto">
+                        {(mode === 'search'
+                          ? ["budget 2025", "piscine", "conseil communal"]
+                          : [
+                              "Quels événements ce week-end ?",
+                              "Fais-moi un agenda de la semaine",
+                              "Quelles sont les prochaines séances publiques ?",
+                            ]
+                        ).map((suggestion) => (
+                          <button
+                            key={suggestion}
+                            onClick={() => {
+                              if (mode === 'search') {
+                                setInput(suggestion)
+                                handleSearch(suggestion)
+                              } else {
+                                setInput(suggestion)
+                              }
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-gray-600 bg-gray-50 hover:bg-orange-50 hover:text-orange-600 rounded-lg border border-gray-200 hover:border-orange-200 transition-colors"
+                          >
+                            {suggestion}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   )}
                 
@@ -777,19 +890,24 @@ print(data['choices'][0]['message']['content'])`
                 </div>
                 
                 
-                <form onSubmit={handleSubmit} className="p-4 border-t border-gray-200">
+                <form onSubmit={handleFormSubmit} className="p-4 border-t border-gray-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <ModeToggle mode={mode} onChange={(m) => { setMode(m); setSearchResults(null) }} />
+                  </div>
                   <div className="relative">
                     <Input
                       type="text"
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
-                      placeholder={`Ask about ${siteData.metadata.title}...`}
+                      placeholder={mode === 'search'
+                        ? `Rechercher dans ${siteData.metadata.title}...`
+                        : `Posez une question sur ${siteData.metadata.title}...`}
                       className="w-full pr-12 placeholder:text-gray-400"
-                      disabled={isLoading}
+                      disabled={isLoading || isSearching}
                     />
                     <button
                       type="submit"
-                      disabled={isLoading || !input.trim()}
+                      disabled={(isLoading || isSearching) || !input.trim()}
                       className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-orange-600 hover:text-orange-700 disabled:opacity-50 transition-colors"
                     >
                       <Send className="w-4 h-4" />
@@ -901,7 +1019,7 @@ print(data['choices'][0]['message']['content'])`
                               <div className="flex items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg border border-gray-200">
                                 <span className="text-xs text-gray-600">Namespace</span>
                                 <span className="text-xs font-mono text-gray-800 truncate max-w-[140px] bg-white px-2 py-1 rounded">
-                                  {siteData.namespace.split('-').slice(0, -1).join('.')}
+                                  {siteData.namespace}
                                 </span>
                               </div>
                             </div>
@@ -913,10 +1031,11 @@ print(data['choices'][0]['message']['content'])`
                 </div>
               </div>
             </div>
+            )}
           </div>
         </div>
       </div>
-      
+
       {/* Delete Confirmation Modal */}
       <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
         <DialogContent className="sm:max-w-md bg-white z-50">

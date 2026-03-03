@@ -63,10 +63,20 @@ export async function POST(request: NextRequest) {
 
     let result: ScrapeResult;
 
+    // Default scrape options for clean content extraction
+    const defaultOptions = {
+      onlyMainContent: true,
+      waitFor: 5000,
+      excludeTags: ['nav', 'footer', 'header', 'aside', '.cookie', '.cookies', '#cookie', '.menu', '.sidebar'],
+      blockAds: true,
+      removeBase64Images: true,
+      ...params,
+    };
+
     if (url && typeof url === 'string') {
-      result = await app.scrapeUrl(url, params) as ScrapeResult;
+      result = await app.scrapeUrl(url, defaultOptions) as ScrapeResult;
     } else if (urls && Array.isArray(urls)) {
-      result = await app.batchScrapeUrls(urls, params) as ScrapeResult;
+      result = await app.batchScrapeUrls(urls, defaultOptions) as ScrapeResult;
     } else {
       return NextResponse.json({ success: false, error: 'Invalid request format. Please check your input and try again.' }, { status: 400 });
     }

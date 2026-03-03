@@ -1,0 +1,112 @@
+{
+  "lastSyncedAt": "2026-03-02T14:26:57.517Z",
+  "indexes": [
+    {
+      "url": "https://www.yverdon-les-bains.ch/evenements",
+      "namespace": "www-yverdon-les-bains-ch-1772370064776",
+      "pagesCrawled": 1,
+      "createdAt": "2026-03-02T11:00:24.735Z",
+      "metadata": {
+        "title": "Commune d'Yverdon-les-Bains - 404 - Site officiel de la Commune"
+      },
+      "sources": [
+        {
+          "url": "https://www.yverdon-les-bains.ch/evenements",
+          "type": "firecrawl",
+          "lastCrawledAt": "",
+          "documentCount": 0
+        }
+      ]
+    },
+    {
+      "url": "geocity://yverdon | https://www.amalgameclub.ch/programme/ | https://www.lamarive.ch/manifestations",
+      "namespace": "agenda-culturel-nv",
+      "pagesCrawled": 435,
+      "createdAt": "2026-03-01T14:21:56.538Z",
+      "metadata": {
+        "title": "Agenda Yverdon-les-Bains (geocity.ch)",
+        "description": "183 événements importés depuis l'API geocity.ch",
+        "favicon": "https://www.yverdon-les-bains.ch/favicon.ico"
+      },
+      "sources": [
+        {
+          "url": "geocity://yverdon",
+          "type": "geocity",
+          "lastCrawledAt": "2026-03-01T14:45:51.734Z",
+          "documentCount": 183
+        },
+        {
+          "url": "https://www.amalgameclub.ch/programme/",
+          "type": "firecrawl",
+          "lastCrawledAt": "2026-03-01T14:46:48.129Z",
+          "documentCount": 2
+        },
+        {
+          "url": "https://www.lamarive.ch/manifestations",
+          "type": "firecrawl",
+          "lastCrawledAt": "2026-03-01T15:07:29.307Z",
+          "documentCount": 200
+        }
+      ],
+      "lastCrawledAt": "2026-03-01T15:07:29.307Z",
+      "crawlHistory": [
+        {
+          "crawledAt": "2026-03-01T15:07:29.307Z",
+          "sourceUrl": "https://www.lamarive.ch/manifestations",
+          "documentsFound": 200,
+          "newDocuments": 200,
+          "updatedDocuments": 0
+        },
+        {
+          "crawledAt": "2026-03-01T14:46:48.129Z",
+          "sourceUrl": "https://www.amalgameclub.ch/programme/",
+          "documentsFound": 2,
+          "newDocuments": 2,
+          "updatedDocuments": 0
+        },
+        {
+          "crawledAt": "2026-03-01T14:45:51.734Z",
+          "sourceUrl": "geocity://yverdon",
+          "documentsFound": 183,
+          "newDocuments": 183,
+          "updatedDocuments": 0
+        }
+      ]
+    },
+    {
+      "url": "pdf://www.yverdon-les-bains.ch/vie-politique/conseil-communal/seances",
+      "namespace": "agenda-politique-nv",
+      "pagesCrawled": 100,
+      "createdAt": "2026-03-01T18:03:02.564Z",
+      "metadata": {
+        "title": "Agenda Politique",
+        "description": "100 PDFs extraits de https://www.yverdon-les-bains.ch/vie-politique/conseil-communal/seances"
+      },
+      "sources": [
+        {
+          "url": "pdf://www.yverdon-les-bains.ch/vie-politique/conseil-communal/seances",
+          "type": "pdf",
+          "lastCrawledAt": "2026-03-01T18:03:18.832Z",
+          "documentCount": 100
+        }
+      ],
+      "lastCrawledAt": "2026-03-01T18:03:18.832Z",
+      "crawlHistory": [
+        {
+          "crawledAt": "2026-03-01T18:03:18.832Z",
+          "sourceUrl": "pdf://www.yverdon-les-bains.ch/vie-politique/conseil-communal/seances",
+          "documentsFound": 100,
+          "newDocuments": 15,
+          "updatedDocuments": 85
+        },
+        {
+          "crawledAt": "2026-03-01T18:03:02.564Z",
+          "sourceUrl": "pdf://www.yverdon-les-bains.ch/vie-politique/conseil-communal/seances",
+          "documentsFound": 85,
+          "newDocuments": 85,
+          "updatedDocuments": 0
+        }
+      ]
+    }
+  ]
+}

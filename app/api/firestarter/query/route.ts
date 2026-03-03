@@ -3,23 +3,22 @@ import { streamText } from 'ai'
 import { groq } from '@ai-sdk/groq'
 import { openai } from '@ai-sdk/openai'
 import { anthropic } from '@ai-sdk/anthropic'
-import { searchIndex } from '@/lib/upstash-search'
+import { searchIndex, detectSourceType, generateSnippet } from '@/lib/upstash-search'
 import { serverConfig as config } from '@/firestarter.config'
 
-// Get AI model at runtime on server
+// Get AI model at runtime on server - Priority: Anthropic > OpenAI > Groq
 const getModel = () => {
   try {
-    // Initialize models directly here to avoid module-level issues
-    if (process.env.GROQ_API_KEY) {
-      return groq('meta-llama/llama-4-scout-17b-16e-instruct')
+    if (process.env.ANTHROPIC_API_KEY) {
+      return anthropic('claude-sonnet-4-5-20250929')
     }
     if (process.env.OPENAI_API_KEY) {
       return openai('gpt-4o')
     }
-    if (process.env.ANTHROPIC_API_KEY) {
-      return anthropic('claude-3-5-sonnet-20241022')
+    if (process.env.GROQ_API_KEY) {
+      return groq('meta-llama/llama-4-scout-17b-16e-instruct')
     }
-    throw new Error('No AI provider configured. Please set GROQ_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY')
+    throw new Error('No AI provider configured. Please set ANTHROPIC_API_KEY, OPENAI_API_KEY, or GROQ_API_KEY')
   } catch (error) {
     throw error
   }
@@ -33,6 +32,8 @@ export async function POST(request: NextRequest) {
     let query = body.query
     const namespace = body.namespace
     const stream = body.stream ?? false
+    const mode: 'chat' | 'search' = body.mode || 'chat'
+    const filters = body.filters || {}
     
     // If using useChat format, extract query from messages
     if (!query && body.messages && Array.isArray(body.messages)) {
@@ -66,71 +67,20 @@ export async function POST(request: NextRequest) {
     }
     
     let documents: SearchDocument[] = []
-    
+
     try {
-      // Search for documents - include namespace to improve relevance
-      
-      // Include namespace in search to boost relevance
-      const searchQuery = `${query} ${namespace}`
-      
+      // Search with server-side namespace filter for efficiency
+      const namespaceFilter = `namespace = '${namespace}'`
+
       const searchResults = await searchIndex.search({
-        query: searchQuery,
+        query: query,
         limit: config.search.maxResults,
+        filter: namespaceFilter,
         reranking: true
       })
-      
-      
-      // Filter to only include documents from the correct namespace
-      documents = searchResults.filter((doc) => {
-        const docNamespace = doc.metadata?.namespace
-        const matches = docNamespace === namespace
-        if (!matches && doc.metadata?.namespace) {
-          // Only log first few mismatches to avoid spam
-          if (documents.length < 3) {
-          }
-        }
-        return matches
-      })
-      
-      
-      // If no results, try searching just for documents in this namespace
-      if (documents.length === 0) {
-        
-        const fallbackResults = await searchIndex.search({
-          query: namespace,
-          limit: config.search.maxResults,
-          reranking: true
-        })
-        
-        
-        // Filter for exact namespace match
-        const namespaceDocs = fallbackResults.filter((doc) => {
-          return doc.metadata?.namespace === namespace
-        })
-        
-        
-        // If we found documents in the namespace, search within their content
-        if (namespaceDocs.length > 0) {
-          // Score documents based on query relevance
-          const queryLower = query.toLowerCase()
-          documents = namespaceDocs.filter((doc) => {
-            const content = (doc.content?.text || '').toLowerCase()
-            const title = (doc.content?.title || '').toLowerCase()
-            const url = (doc.content?.url || '').toLowerCase()
-            
-            return content.includes(queryLower) || 
-                   title.includes(queryLower) || 
-                   url.includes(queryLower)
-          })
-          
-          
-          // If still no results, return all namespace documents
-          if (documents.length === 0) {
-            documents = namespaceDocs
-          }
-        }
-      }
-      
+
+      documents = searchResults
+
     } catch {
       console.error('Search failed')
       documents = []
@@ -219,6 +169,54 @@ ${rawContent}`
     
     // If no matches, use more documents as context
     const docsToUse = relevantDocs.length > 0 ? relevantDocs : transformedDocuments.slice(0, 10)
+
+    // ── Search mode: return enriched results without AI ──
+    if (mode === 'search') {
+      const { high, medium } = config.search.scoreThresholds
+      const limit = Math.min(filters.limit || config.search.defaultSearchResults, config.search.maxSearchResults)
+
+      let searchResults = docsToUse.map((doc, _i) => {
+        // Find original document to get raw metadata
+        const original = documents[transformedDocuments.indexOf(doc)]
+        const sourceType = detectSourceType({
+          id: (original as { id?: string })?.id || '',
+          metadata: original?.metadata as Record<string, unknown> | undefined,
+        })
+        const rawContent = original?.metadata?.fullContent || original?.content?.text || doc.content || ''
+        const snippet = generateSnippet(rawContent, query, config.search.snippetLength)
+        const score = doc.score
+        const scoreLabel = score >= high ? 'Tres pertinent' : score >= medium ? 'Pertinent' : 'Faible'
+
+        return {
+          id: (original as { id?: string })?.id || `doc-${_i}`,
+          title: doc.title,
+          url: doc.url,
+          snippet,
+          score,
+          scoreLabel,
+          sourceType,
+          metadata: {
+            crawlDate: (original?.metadata as Record<string, unknown>)?.crawlDate as string | undefined,
+            description: doc.description,
+            startsAt: (original?.metadata as Record<string, unknown>)?.startsAt as string | undefined,
+            location: (original?.metadata as Record<string, unknown>)?.location as string | undefined,
+          },
+        }
+      })
+
+      // Apply sourceType filter
+      if (filters.sourceType) {
+        searchResults = searchResults.filter(r => r.sourceType === filters.sourceType)
+      }
+
+      // Apply limit
+      searchResults = searchResults.slice(0, limit)
+
+      return new Response(
+        JSON.stringify({ results: searchResults, totalFound: searchResults.length, query }),
+        { headers: { 'Content-Type': 'application/json' } }
+      )
+    }
 
     // Build context from relevant documents - use more content for better answers
     const contextDocs = docsToUse.slice(0, config.search.maxContextDocs) // Use top docs for richer context

@@ -10,47 +10,21 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Firecrawl Tools - AI-Powered Web Scraping & Data Enrichment",
-  description: "Transform websites into structured data with Firecrawl's suite of AI tools. Create chatbots, enrich CSVs, search intelligently, and generate images from URLs.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_URL || "https://firecrawl.dev"),
+  title: "Agenda Nord Vaudois - Veille IA pour journalistes",
+  description: "Générez des agendas culturels et politiques du Nord Vaudois grâce à l'IA. Crawlez vos sources, interrogez l'agenda en langage naturel.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_URL || "http://localhost:3000"),
   openGraph: {
-    title: "Firecrawl Tools - AI-Powered Web Scraping & Data Enrichment",
-    description: "Transform websites into structured data with Firecrawl's suite of AI tools. Create chatbots, enrich CSVs, search intelligently, and generate images from URLs.",
+    title: "Agenda Nord Vaudois - Veille IA pour journalistes",
+    description: "Générez des agendas culturels et politiques du Nord Vaudois grâce à l'IA.",
     url: "/",
-    siteName: "Firecrawl Tools",
-    images: [
-      {
-        url: "/firecrawl-logo-with-fire.png",
-        width: 1200,
-        height: 630,
-        alt: "Firecrawl - AI-Powered Web Scraping",
-      },
-    ],
-    locale: "en_US",
+    siteName: "Agenda Nord Vaudois",
+    locale: "fr_CH",
     type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Firecrawl Tools - AI-Powered Web Scraping",
-    description: "Transform websites into structured data with AI",
-    images: ["/firecrawl-logo-with-fire.png"],
-    creator: "@firecrawl_dev",
   },
   icons: {
     icon: "/favicon.ico",
     shortcut: "/favicon.ico",
     apple: "/favicon.ico",
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
   },
 };
 
@@ -60,7 +34,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="fr" suppressHydrationWarning>
       <body
         suppressHydrationWarning={true}
         className={cn(

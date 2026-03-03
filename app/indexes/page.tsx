@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Globe, FileText, Database, ExternalLink, Trash2, Calendar } from 'lucide-react'
+import { Globe, FileText, Database, ExternalLink, Trash2, Calendar, Settings, Clock } from 'lucide-react'
 import { toast } from "sonner"
 import { useStorage } from "@/hooks/useStorage"
 
@@ -23,23 +23,9 @@ interface IndexedSite {
 
 export default function IndexesPage() {
   const router = useRouter()
-  const { indexes, loading, deleteIndex, isUsingRedis } = useStorage()
+  const { indexes, loading, deleteIndex } = useStorage()
 
   const handleSelectIndex = (index: IndexedSite) => {
-    // Store the site info in session storage for the dashboard
-    const siteInfo = {
-      url: index.url,
-      namespace: index.namespace,
-      pagesCrawled: index.pagesCrawled,
-      crawlDate: index.createdAt,
-      metadata: index.metadata || {},
-      crawlComplete: true,
-      fromIndex: true // Flag to indicate this is from the index list
-    }
-    
-    sessionStorage.setItem('firestarter_current_data', JSON.stringify(siteInfo))
-    
-    // Navigate to the dashboard with namespace parameter
     router.push(`/dashboard?namespace=${index.namespace}`)
   }
 
@@ -59,9 +45,9 @@ export default function IndexesPage() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
+    return date.toLocaleDateString('fr-CH', {
+      day: 'numeric',
+      month: 'long',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
@@ -71,30 +57,24 @@ export default function IndexesPage() {
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-4 max-w-7xl mx-auto font-inter">
       <div className="flex justify-between items-center mb-8">
-        <Link href="https://www.firecrawl.dev/?utm_source=tool-firestarter" target="_blank" rel="noopener noreferrer">
-          <Image
-            src="/firecrawl-logo-with-fire.png"
-            alt="Firecrawl Logo"
-            width={113}
-            height={24}
-          />
-        </Link>
+        <div>
+          <h2 className="text-xl font-bold text-[#36322F]">Agenda Nord Vaudois</h2>
+        </div>
         <Button
           asChild
           variant="orange"
           size="sm"
         >
           <Link href="/">
-            Create New Chatbot
+            Créer un agenda
           </Link>
         </Button>
       </div>
 
       <div className="mb-8">
-        <h1 className="text-3xl font-semibold text-[#36322F] mb-2">Your Chatbots</h1>
+        <h1 className="text-3xl font-semibold text-[#36322F] mb-2">Mes agendas</h1>
         <p className="text-gray-600">
-          View and manage all your chatbots
-          {isUsingRedis && <span className="text-xs text-gray-500 ml-2">(using Redis storage)</span>}
+          Consultez et gérez vos agendas
         </p>
       </div>
 
@@ -105,11 +85,11 @@ export default function IndexesPage() {
       ) : indexes.length === 0 ? (
         <div className="text-center py-20">
           <Globe className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">No Chatbots Yet</h3>
-          <p className="text-gray-600 mb-6">You haven&apos;t created any chatbots yet.</p>
+          <h3 className="text-xl font-semibold text-gray-700 mb-2">Aucun agenda</h3>
+          <p className="text-gray-600 mb-6">Vous n&apos;avez pas encore créé d&apos;agenda.</p>
           <Button asChild variant="orange">
-            <Link href="/firestarter">
-              Create Your First Chatbot
+            <Link href="/">
+              Créer votre premier agenda
             </Link>
           </Button>
         </div>
@@ -188,10 +168,28 @@ export default function IndexesPage() {
                         <Calendar className="w-4 h-4" />
                         <span>{formatDate(index.createdAt)}</span>
                       </div>
+                      {(index as IndexedSite & { lastCrawledAt?: string }).lastCrawledAt && (
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-green-500" />
+                          <span>Dernier crawl: {formatDate((index as IndexedSite & { lastCrawledAt?: string }).lastCrawledAt!)}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                   
                   <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        router.push(`/manage?namespace=${index.namespace}`)
+                      }}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Settings className="w-4 h-4 mr-1" />
+                      Gérer
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
