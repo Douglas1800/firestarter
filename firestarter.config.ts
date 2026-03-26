@@ -130,6 +130,10 @@ Si l'utilisateur te salue, présente-toi brièvement comme l'assistant de veille
     maxSearchResults: 50,
     defaultSearchResults: 20,
     scoreThresholds: { high: 0.7, medium: 0.4 },
+    dedup: {
+      enabled: true,
+      similarityThreshold: 0.65,
+    },
   },
 
   storage: {

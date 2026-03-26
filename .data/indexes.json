@@ -1,17 +1,17 @@
 {
-  "lastSyncedAt": "2026-03-03T08:54:22.138Z",
+  "lastSyncedAt": "2026-03-26T09:47:17.253Z",
   "indexes": [
     {
-      "url": "https://www.yverdon-les-bains.ch/evenements",
-      "namespace": "www-yverdon-les-bains-ch-1772370064776",
-      "pagesCrawled": 1,
-      "createdAt": "2026-03-02T11:00:24.735Z",
+      "url": "https://www.cc-peva.fr/301-tout-l-agenda.htm",
+      "namespace": "www-cc-peva-fr-1774107480245",
+      "pagesCrawled": 3,
+      "createdAt": "2026-03-26T09:25:46.453Z",
       "metadata": {
-        "title": "Commune d'Yverdon-les-Bains - 404 - Site officiel de la Commune"
+        "title": "Tout l'agenda - Pays d'Evian Vallée d'Abondance"
       },
       "sources": [
         {
-          "url": "https://www.yverdon-les-bains.ch/evenements",
+          "url": "https://www.cc-peva.fr/301-tout-l-agenda.htm",
           "type": "firecrawl",
           "lastCrawledAt": "",
           "documentCount": 0
@@ -105,6 +105,125 @@
           "documentsFound": 85,
           "newDocuments": 85,
           "updatedDocuments": 0
+        }
+      ]
+    },
+    {
+      "url": "https://www.journans.fr/guide-pour-les-visiteurs/comment-venir-ici/",
+      "namespace": "www-journans-fr-1774100590547",
+      "pagesCrawled": 25,
+      "createdAt": "2026-03-26T09:25:46.453Z",
+      "metadata": {
+        "title": "Comment venir ici - Commune de journans "
+      },
+      "sources": [
+        {
+          "url": "https://www.journans.fr/guide-pour-les-visiteurs/comment-venir-ici/",
+          "type": "firecrawl",
+          "lastCrawledAt": "",
+          "documentCount": 0
+        }
+      ]
+    },
+    {
+      "url": "https://www.grandson.ch/vie-locale/agenda-des-manifestations/",
+      "namespace": "www-grandson-ch-1774101180341",
+      "pagesCrawled": 1,
+      "createdAt": "2026-03-26T09:25:46.453Z",
+      "metadata": {
+        "title": "Bienvenue sur le site de la commune de Grandson"
+      },
+      "sources": [
+        {
+          "url": "https://www.grandson.ch/vie-locale/agenda-des-manifestations/",
+          "type": "firecrawl",
+          "lastCrawledAt": "",
+          "documentCount": 0
+        }
+      ]
+    },
+    {
+      "url": "https://www.ville-publier.fr/",
+      "namespace": "www-ville-publier-fr-1774101913054",
+      "pagesCrawled": 200,
+      "createdAt": "2026-03-26T09:25:46.453Z",
+      "metadata": {
+        "title": "Accueil - Ville de Publier"
+      },
+      "sources": [
+        {
+          "url": "https://www.ville-publier.fr/",
+          "type": "firecrawl",
+          "lastCrawledAt": "",
+          "documentCount": 0
+        }
+      ]
+    },
+    {
+      "url": "https://www.ville-publier.fr/agenda/",
+      "namespace": "www-ville-publier-fr-1774102204677",
+      "pagesCrawled": 18,
+      "createdAt": "2026-03-26T09:25:46.453Z",
+      "metadata": {
+        "title": "Agenda - Ville de Publier"
+      },
+      "sources": [
+        {
+          "url": "https://www.ville-publier.fr/agenda/",
+          "type": "firecrawl",
+          "lastCrawledAt": "",
+          "documentCount": 0
+        }
+      ]
+    },
+    {
+      "url": "https://www.montagny.ch/manifestations.php",
+      "namespace": "www-montagny-ch-1774106753777",
+      "pagesCrawled": 1,
+      "createdAt": "2026-03-26T09:25:46.453Z",
+      "metadata": {
+        "title": "Agenda - Commune de Montagny-près-Yverdon"
+      },
+      "sources": [
+        {
+          "url": "https://www.montagny.ch/manifestations.php",
+          "type": "firecrawl",
+          "lastCrawledAt": "",
+          "documentCount": 0
+        }
+      ]
+    },
+    {
+      "url": "https://www.evian-tourisme.com/agenda/",
+      "namespace": "www-evian-tourisme-com-1774106877822",
+      "pagesCrawled": 53,
+      "createdAt": "2026-03-26T09:25:46.453Z",
+      "metadata": {
+        "title": "Agenda - Evian - Tourisme & congrès"
+      },
+      "sources": [
+        {
+          "url": "https://www.evian-tourisme.com/agenda/",
+          "type": "firecrawl",
+          "lastCrawledAt": "",
+          "documentCount": 0
+        }
+      ]
+    },
+    {
+      "url": "https://www.evian-tourisme.com/agenda/?date_spe=ce_mois_ci",
+      "namespace": "www-evian-tourisme-com-1774107272741",
+      "pagesCrawled": 57,
+      "createdAt": "2026-03-26T09:25:46.453Z",
+      "metadata": {
+        "title": "Agenda - Evian - Tourisme & congrès"
+      },
+      "sources": [
+        {
+          "url": "https://www.evian-tourisme.com/agenda/?date_spe=ce_mois_ci",
+          "type": "firecrawl",
+          "lastCrawledAt": "",
+          "documentCount": 0
         }
       ]
     }

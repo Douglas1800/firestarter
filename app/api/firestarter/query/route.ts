@@ -5,6 +5,7 @@ import { openai } from '@ai-sdk/openai'
 import { anthropic } from '@ai-sdk/anthropic'
 import { searchIndex, detectSourceType, generateSnippet } from '@/lib/upstash-search'
 import { serverConfig as config } from '@/firestarter.config'
+import { deduplicateResults } from '@/lib/dedup'
 
 // Get AI model at runtime on server - Priority: Anthropic > OpenAI > Groq
 const getModel = () => {
@@ -204,6 +205,17 @@ ${rawContent}`
         }
       })
 
+      // Deduplicate similar results
+      if (config.search.dedup.enabled) {
+        searchResults = deduplicateResults(
+          searchResults,
+          r => r.title,
+          r => r.url,
+          r => r.score,
+          config.search.dedup.similarityThreshold,
+        )
+      }
+
       // Apply sourceType filter
       if (filters.sourceType) {
         searchResults = searchResults.filter(r => r.sourceType === filters.sourceType)
@@ -218,8 +230,19 @@ ${rawContent}`
       )
     }
 
+    // Deduplicate context docs to avoid wasting slots on duplicates
+    const dedupedDocs = config.search.dedup.enabled
+      ? deduplicateResults(
+          docsToUse,
+          d => d.title,
+          d => d.url,
+          d => d.score,
+          config.search.dedup.similarityThreshold,
+        )
+      : docsToUse
+
     // Build context from relevant documents - use more content for better answers
-    const contextDocs = docsToUse.slice(0, config.search.maxContextDocs) // Use top docs for richer context
+    const contextDocs = dedupedDocs.slice(0, config.search.maxContextDocs) // Use top docs for richer context
     
     // Log document structure for debugging
     if (contextDocs.length > 0) {
@@ -239,9 +262,9 @@ ${rawContent}`
     
     // If context is empty, log error
     if (!context || context.length < 100) {
-      
+
       const answer = 'I found some relevant pages but couldn\'t extract enough content to answer your question. This might be due to the way the pages were crawled. Try crawling the website again with a higher page limit.'
-      const sources = docsToUse.map((doc) => ({
+      const sources = dedupedDocs.map((doc) => ({
         url: doc.url,
         title: doc.title,
         snippet: (doc.content || '').substring(0, config.search.snippetLength) + '...'
@@ -253,8 +276,8 @@ ${rawContent}`
       )
     }
 
-    // Prepare sources
-    const sources = docsToUse.map((doc) => ({
+    // Prepare sources (use deduplicated list to stay consistent with context)
+    const sources = dedupedDocs.map((doc) => ({
       url: doc.url,
       title: doc.title,
       snippet: (doc.content || '').substring(0, config.search.snippetLength) + '...'

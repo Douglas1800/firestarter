@@ -10,6 +10,7 @@ export interface SearchResult {
   score: number
   scoreLabel: string
   sourceType: 'web' | 'pdf' | 'geocity'
+  altSources?: { url: string; hostname: string }[]
   metadata: {
     crawlDate?: string
     description?: string
@@ -110,7 +111,34 @@ export function SearchResults({ results, query, onSendToChat }: SearchResultsPro
             </h3>
 
             {hostname && (
-              <p className="text-xs text-gray-400 mb-2">{hostname}</p>
+              <p className="text-xs text-gray-400 mb-2">
+                {hostname}
+                {(() => {
+                  const otherSources = result.altSources?.filter(alt => alt.hostname !== hostname) ?? []
+                  return otherSources.length > 0 && (
+                    <span className="ml-1">
+                      {' '}· Aussi sur{' '}
+                      {otherSources.map((alt, i) => (
+                        <span key={alt.url}>
+                          {i > 0 && ', '}
+                          {alt.url && !alt.url.startsWith('geocity://') ? (
+                            <a
+                              href={alt.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-orange-500 hover:text-orange-600 hover:underline"
+                            >
+                              {alt.hostname}
+                            </a>
+                          ) : (
+                            alt.hostname
+                          )}
+                        </span>
+                      ))}
+                    </span>
+                  )
+                })()}
+              </p>
             )}
 
             {/* Snippet */}
